@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080e19">
+    <meta name="description" content="NeuroPlayDockIA — seu ambiente inteligente de aprendizado.">
+
+    <title>NeuroPlayDockIA | Painel de estudos</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+
+<body class="dashboard-page">
+
+    <div class="app-layout">
+
+        <aside class="sidebar" id="sidebar">
+
+            <a href="dashboard.html" class="brand">
+                <img src="assets/logo-neuroplay.png" alt="Logo NeuroPlayDockIA" class="brand-logo">
+                <span class="brand-name">
+                    NeuroPlay<span>DockIA</span>
+                </span>
+            </a>
+
+            <div class="sidebar-section">
+                <span class="sidebar-label">ESPAÇO DE APRENDIZADO</span>
+
+                <nav class="module-navigation" aria-label="Módulos de aprendizagem">
+
+                    <button class="module-button active" data-module="reforco" type="button">
+                        <span class="module-icon module-red">✦</span>
+                        <span>Reforço</span>
+                    </button>
+
+                    <button class="module-button" data-module="alfabetizacao" type="button">
+                        <span class="module-icon module-cyan">Aa</span>
+                        <span>Alfabetização</span>
+                    </button>
+
+                    <button class="module-button" data-module="organizacao" type="button">
+                        <span class="module-icon module-blue">▦</span>
+                        <span>Organização</span>
+                    </button>
+
+                    <button class="module-button" data-module="atividades" type="button">
+                        <span class="module-icon module-purple">✎</span>
+                        <span>Atividades</span>
+                    </button>
+
+                    <button class="module-button" data-module="debate" type="button">
+                        <span class="module-icon module-pink">◉</span>
+                        <span>Debate</span>
+                    </button>
+
+                    <button class="module-button" data-module="enem" type="button">
+                        <span class="module-icon module-orange">⌘</span>
+                        <span>Faculdade & ENEM</span>
+                    </button>
+
+                </nav>
+            </div>
+
+            <div class="sidebar-bottom">
+
+                <div class="sidebar-tip">
+                    <span class="tip-icon">✧</span>
+                    <strong>Uma ideia por vez.</strong>
+
+                    <p>
+                        Aprender é construir conhecimento,
+                        não apenas encontrar respostas.
+                    </p>
+                </div>
+
+                <button class="logout-button" id="logoutButton" type="button">
+                    <span>↪</span>
+                    Sair da conta
+                </button>
+
+            </div>
+
+        </aside>
+
+        <main class="main-content">
+
+            <header class="topbar">
+
+                <div class="topbar-left">
+
+                    <button
+                        class="mobile-menu-button"
+                        id="mobileMenuButton"
+                        type="button"
+                        aria-label="Abrir menu"
+                        aria-expanded="false"
+                        aria-controls="sidebar"
+                    >
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+
+                    <div>
+                        <span class="topbar-eyebrow">SEU AMBIENTE DE APRENDIZADO</span>
+                        <h1>NeuroPlayDockIA</h1>
+                    </div>
+
+                </div>
+
+                <div class="topbar-right">
+
+                    <div class="system-status">
+                        <span class="status-dot"></span>
+                        <span>ONLINE</span>
+                    </div>
+
+                    <div class="user-profile">
+
+                        <div class="user-avatar" id="userAvatar">N</div>
+
+                        <div class="user-info">
+                            <strong id="userName">Estudante</strong>
+                            <span id="userGrade">Sua jornada começa aqui</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+            <section class="welcome-section">
+
+                <div class="welcome-copy">
+
+                    <span class="section-eyebrow">SEU ESPAÇO, SUAS DESCOBERTAS</span>
+
+                    <h2 id="welcomeTitle">
+                        Vamos aprender algo novo?
+                    </h2>
+
+                    <p id="welcomeDescription">
+                        Escolha um módulo e comece a desenvolver seu conhecimento.
+                    </p>
+
+                </div>
+
+                <div class="welcome-decoration" aria-hidden="true">
+                    <div class="welcome-circle circle-one"></div>
+                    <div class="welcome-circle circle-two"></div>
+                    <div class="welcome-circle circle-three"></div>
+                    <span>✧</span>
+                </div>
+
+            </section>
+
+            <section class="workspace">
+
+                <div class="workspace-header">
+
+                    <div>
+                        <span class="section-eyebrow">ÁREA DE INTERAÇÃO</span>
+                        <h2 id="moduleTitle">Reforço</h2>
+
+                        <p id="moduleDescription">
+                            Aprenda no seu ritmo, com explicações e orientação.
+                        </p>
+                    </div>
+
+                    <div class="workspace-indicator">
+                        <span class="status-dot"></span>
+                        TUTOR DISPONÍVEL
+                    </div>
+
+                </div>
+
+                <div class="chat-panel">
+
+                    <div class="chat-header">
+
+                        <div class="tutor-identity">
+
+                            <div class="tutor-avatar">
+                                <span>N</span>
+                                <i></i>
+                            </div>
+
+                            <div>
+                                <strong>NeuroPlay Tutor</strong>
+                                <span>Assistente de aprendizagem</span>
+                            </div>
+
+                        </div>
+
+                        <button
+                            class="clear-chat-button"
+                            id="clearChatButton"
+                            type="button"
+                        >
+                            Nova conversa
+                        </button>
+
+                    </div>
+
+                    <div
+                        class="chat-messages"
+                        id="chatMessages"
+                        aria-live="polite"
+                        aria-label="Conversa com o tutor"
+                    ></div>
+
+                    <div
+                        class="chat-error"
+                        id="chatError"
+                        role="alert"
+                        hidden
+                    ></div>
+
+                    <div class="chat-footer">
+
+                        <form id="chatForm" class="chat-form">
+
+                            <div class="chat-input-wrapper">
+
+                                <textarea
+                                    id="chatInput"
+                                    name="mensagem"
+                                    placeholder="Escreva sua dúvida ou ideia..."
+                                    rows="1"
+                                    maxlength="5000"
+                                    aria-label="Sua mensagem para o tutor"
+                                    required
+                                ></textarea>
+
+                                <button
+                                    type="submit"
+                                    id="sendButton"
+                                    class="send-button"
+                                    aria-label="Enviar mensagem"
+                                    disabled
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="M4 12L20 4L14 20L11 13L4 12Z"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"/>
+                                        <path d="M11 13L20 4"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                            stroke-linecap="round"/>
+                                    </svg>
+                                </button>
+
+                            </div>
+
+                            <div class="chat-input-meta">
+                                <span id="characterCount">0/5000</span>
+                                <span>Enter para enviar · Shift + Enter para pular linha</span>
+                            </div>
+
+                        </form>
+
+                        <div class="chat-disclaimer">
+                            O objetivo é ajudar você a aprender, pensar e construir suas próprias respostas.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <footer class="dashboard-footer">
+                <span>NEUROPLAYDOCKIA © 2026</span>
+                <span>CONHECIMENTO EM MOVIMENTO</span>
+            </footer>
+
+        </main>
+
+    </div>
+
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <script src="js/dashboard.js" defer></script>
+
+</body>
+</html>

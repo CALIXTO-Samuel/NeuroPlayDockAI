@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#080e19">
+
+    <meta name="description" content="Crie sua conta no NeuroPlayDockIA e comece sua jornada de aprendizado.">
+
+    <title>Criar conta | NeuroPlayDockIA</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+
+<body class="auth-page">
+
+    <main class="auth-layout">
+
+        <section class="auth-visual">
+
+            <div class="visual-content">
+
+                <a href="login.html" class="brand">
+                    <span class="brand-symbol">N</span>
+
+                    <span class="brand-name">
+                        NeuroPlay<span>DockIA</span>
+                    </span>
+                </a>
+
+                <div class="visual-message">
+
+                    <span class="eyebrow">
+                        <span class="status-dot"></span>
+                        SEU PRÓXIMO PASSO COMEÇA AQUI
+                    </span>
+
+                    <h1>
+                        Seu potencial
+                        <span>não tem limites.</span>
+                    </h1>
+
+                    <p>
+                        Crie sua conta e tenha um espaço para aprender,
+                        organizar ideias e desenvolver seu próprio raciocínio.
+                    </p>
+
+                </div>
+
+                <div class="visual-decoration" aria-hidden="true">
+                    <div class="orbit orbit-one"></div>
+                    <div class="orbit orbit-two"></div>
+                    <div class="orbit orbit-three"></div>
+                    <div class="orbit-core">N</div>
+                </div>
+
+                <div class="visual-footer">
+                    <span>CONHECIMENTO EM MOVIMENTO</span>
+                    <span>NEUROPLAYDOCKIA © 2026</span>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="auth-content">
+
+            <div class="auth-card">
+
+                <div class="mobile-brand">
+                    <span class="brand-symbol">N</span>
+
+                    <span class="brand-name">
+                        NeuroPlay<span>DockIA</span>
+                    </span>
+                </div>
+
+                <div class="auth-heading">
+
+                    <span class="auth-label">COMECE SUA JORNADA</span>
+
+                    <h2>Crie sua conta</h2>
+
+                    <p>
+                        Preencha seus dados para começar.
+                    </p>
+
+                </div>
+
+
+                <form id="registerForm" class="auth-form" novalidate>
+
+                    <div class="form-group">
+
+                        <label for="nome">Nome completo</label>
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="8" r="4"
+                                        stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M4 21C4 16.8 7.6 14 12 14C16.4 14 20 16.8 20 21"
+                                        stroke="currentColor" stroke-width="1.7"
+                                        stroke-linecap="round"/>
+                                </svg>
+                            </span>
+
+                            <input
+                                type="text"
+                                id="nome"
+                                name="nome"
+                                placeholder="Como podemos chamar você?"
+                                autocomplete="name"
+                                maxlength="80"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="usuario">Nome de usuário</label>
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="8" r="4"
+                                        stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M4 21C4 16.8 7.6 14 12 14C16.4 14 20 16.8 20 21"
+                                        stroke="currentColor" stroke-width="1.7"
+                                        stroke-linecap="round"/>
+                                </svg>
+                            </span>
+
+                            <input
+                                type="text"
+                                id="usuario"
+                                name="usuario"
+                                placeholder="Escolha um usuário"
+                                autocomplete="username"
+                                minlength="3"
+                                maxlength="30"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-row">
+
+                        <div class="form-group">
+
+                            <label for="idade">Idade</label>
+
+                            <div class="input-wrapper">
+
+                                <input
+                                    type="number"
+                                    id="idade"
+                                    name="idade"
+                                    placeholder="Ex.: 14"
+                                    min="5"
+                                    max="100"
+                                    inputmode="numeric"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="serie">Ano escolar</label>
+
+                            <div class="input-wrapper">
+
+                                <select
+                                    id="serie"
+                                    name="serie"
+                                    required
+                                >
+                                    <option value="">Selecione</option>
+                                    <option value="1º ano do Ensino Fundamental">1º ano do Ensino Fundamental</option>
+                                    <option value="2º ano do Ensino Fundamental">2º ano do Ensino Fundamental</option>
+                                    <option value="3º ano do Ensino Fundamental">3º ano do Ensino Fundamental</option>
+                                    <option value="4º ano do Ensino Fundamental">4º ano do Ensino Fundamental</option>
+                                    <option value="5º ano do Ensino Fundamental">5º ano do Ensino Fundamental</option>
+                                    <option value="6º ano do Ensino Fundamental">6º ano do Ensino Fundamental</option>
+                                    <option value="7º ano do Ensino Fundamental">7º ano do Ensino Fundamental</option>
+                                    <option value="8º ano do Ensino Fundamental">8º ano do Ensino Fundamental</option>
+                                    <option value="9º ano do Ensino Fundamental">9º ano do Ensino Fundamental</option>
+                                    <option value="1º ano do Ensino Médio">1º ano do Ensino Médio</option>
+                                    <option value="2º ano do Ensino Médio">2º ano do Ensino Médio</option>
+                                    <option value="3º ano do Ensino Médio">3º ano do Ensino Médio</option>
+                                    <option value="Ensino Superior">Ensino Superior</option>
+                                    <option value="Outro">Outro</option>
+                                </select>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="senha">Senha</label>
+
+                        <div class="input-wrapper">
+
+                            <span class="input-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <rect x="4" y="10" width="16" height="11"
+                                        rx="2" stroke="currentColor"
+                                        stroke-width="1.7"/>
+                                    <path d="M8 10V7C8 4.8 9.8 3 12 3C14.2 3 16 4.8 16 7V10"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"
+                                        stroke-linecap="round"/>
+                                </svg>
+                            </span>
+
+                            <input
+                                type="password"
+                                id="senha"
+                                name="senha"
+                                placeholder="Crie uma senha"
+                                autocomplete="new-password"
+                                minlength="8"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                id="togglePassword"
+                                aria-label="Mostrar senha"
+                                aria-pressed="false"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path d="M2.5 12C4.5 8 8 5.5 12 5.5C16 5.5 19.5 8 21.5 12C19.5 16 16 18.5 12 18.5C8 18.5 4.5 16 2.5 12Z"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"/>
+                                    <circle cx="12" cy="12" r="3"
+                                        stroke="currentColor"
+                                        stroke-width="1.7"/>
+                                </svg>
+                            </button>
+
+                        </div>
+
+                        <span class="field-hint">
+                            Utilize pelo menos 8 caracteres.
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="registerError"
+                        class="form-message"
+                        role="alert"
+                        aria-live="polite"
+                    ></div>
+
+
+                    <button
+                        type="submit"
+                        id="registerButton"
+                        class="primary-button"
+                    >
+                        <span>Criar minha conta</span>
+
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M5 12H19M12 5L19 12L12 19"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+
+                </form>
+
+
+                <p class="auth-switch register-switch">
+                    Já possui uma conta?
+                    <a href="login.html">Entrar</a>
+                </p>
+
+
+                <p class="auth-legal">
+                    Seus dados são utilizados para personalizar
+                    sua experiência de aprendizado.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="js/auth.js" defer></script>
+
+</body>
+</html>
