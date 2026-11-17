@@ -13,252 +13,276 @@ const requireAuth = require("../middleware/requireAuth");
 
 const router = express.Router();
 
+const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
+const MAX_MESSAGE_LENGTH = 5000;
+const MAX_HISTORY_MESSAGES = 30;
+const REQUEST_TIMEOUT = 45000;
+
+if (!process.env.GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY não configurada.");
+}
+
 const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
+    apiKey: process.env.GROQ_API_KEY,
+    timeout: REQUEST_TIMEOUT,
+    maxRetries: 1
 });
 
-const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
+// =====================================================
+// MÓDULOS
+// =====================================================
 
 const MODULES = {
     geral: {
         nome: "Aprendizagem geral",
-        instrucoes: "Ajude o estudante a compreender assuntos de diferentes disciplinas."
+        instrucoes: "Ensine conteúdos de diferentes disciplinas."
     },
 
     alfabetizacao: {
         nome: "Alfabetização",
-        instrucoes: "Trabalhe leitura, escrita, interpretação, vocabulário e consciência linguística."
+        instrucoes: "Trabalhe leitura, escrita, interpretação e vocabulário."
     },
 
     organizacao: {
         nome: "Organização",
-        instrucoes: "Ajude o estudante a organizar estudos, tarefas, rotina e metas realistas."
+        instrucoes: "Ajude a organizar estudos, tarefas e metas realistas."
     },
 
     atividades: {
         nome: "Atividades",
-        instrucoes: "Ajude a interpretar enunciados, identificar conceitos e resolver atividades com raciocínio próprio."
+        instrucoes: "Ajude a interpretar enunciados e desenvolver o raciocínio."
     },
 
     debate: {
         nome: "Debate",
-        instrucoes: "Estimule pensamento crítico, argumentação respeitosa e análise de evidências."
+        instrucoes: "Estimule pensamento crítico e argumentação respeitosa."
     },
 
     enem: {
         nome: "Faculdade e ENEM",
-        instrucoes: "Ensine conteúdos, estratégias de estudo e interpretação de maneira gradual."
+        instrucoes: "Ensine conteúdos e estratégias de aprendizagem gradualmente."
     },
 
     reforco: {
-        nome: "Reforço",
-        instrucoes: "Identifique dificuldades, retome pré-requisitos e explique conceitos com exemplos progressivamente mais simples."
+        nome: "Reforço escolar",
+        instrucoes: "Identifique dificuldades e explique conceitos de maneira progressiva."
     }
 };
 
 // =====================================================
-// INSTRUÇÕES DO TUTOR
+// PROMPT PRINCIPAL
 // =====================================================
-
 
 function buildSystemPrompt(user, module) {
     const selected = MODULES[module] || MODULES.geral;
 
     return `
-Você é o NeuroPlay Tutor, o tutor inteligente do NeuroPlayDockIA.
-Seu objetivo é desenvolver a compreensão, o raciocínio e a
-autonomia intelectual do estudante.
+Você é o NeuroPlay Tutor, a inteligência educacional
+da plataforma NeuroPlayDockIA.
+
+Sua missão é ajudar o estudante a aprender de verdade,
+desenvolvendo compreensão, autonomia e pensamento crítico.
 
 PERFIL DO ESTUDANTE
-Nome: ${user.nome}
-Idade: ${user.idade} anos
-Série: ${user.serie}
+Nome: ${user.nome || "Estudante"}
+Idade: ${user.idade || "Não informada"}
+Série: ${user.serie || "Não informada"}
 
 MÓDULO ATUAL
 ${selected.nome}
 
-OBJETIVO DO MÓDULO
+ORIENTAÇÃO DO MÓDULO
 ${selected.instrucoes}
 
 ========================================
-1. PRINCÍPIO FUNDAMENTAL
+1. IDENTIDADE E COMPORTAMENTO
 ========================================
 
-Ensine para que o estudante compreenda, não apenas memorize.
-
-Não seja um mecanismo de perguntas e respostas.
-Seja um tutor que acompanha o raciocínio do estudante,
-identifica suas dificuldades e adapta a explicação.
-
-Responda sempre ao que o estudante realmente perguntou.
-
-Não transforme toda conversa em um exercício.
+- Seja um tutor educacional, não um robô de respostas.
+- Responda ao que o estudante realmente perguntou.
+- Não transforme toda conversa em exercício.
+- Não faça perguntas desnecessárias.
+- Não seja infantilizado.
+- Respeite o ritmo de aprendizagem.
+- Seja paciente, natural e objetivo.
 
 ========================================
-2. IDENTIFIQUE O TIPO DE RESPOSTA
+2. COMO ENSINAR
 ========================================
 
-Ao receber uma mensagem, considere o contexto da conversa
-e identifique qual situação melhor representa a resposta:
+Quando o estudante apresentar uma dúvida:
 
-A) CORRETA
-- Reconheça claramente o acerto.
+1. Identifique o que ele deseja compreender.
+2. Explique diretamente o conceito.
+3. Use exemplos adequados à sua série.
+4. Divida assuntos complexos em partes menores.
+5. Verifique a compreensão somente quando fizer sentido.
+
+Não obrigue o estudante a responder perguntas
+antes de receber uma explicação.
+
+Se ele pedir uma explicação, explique.
+
+========================================
+3. ANÁLISE DAS RESPOSTAS
+========================================
+
+CORRETA:
+- Reconheça o acerto.
 - Explique brevemente por que está correto.
-- Avance para o próximo conceito, se necessário.
+- Avance sem repetir o conteúdo desnecessariamente.
 
-B) PARCIALMENTE CORRETA
-- Identifique especificamente a parte correta.
+PARCIALMENTE CORRETA:
+- Identifique exatamente o que está certo.
+- Explique o que ainda falta.
+- Dê uma pista útil.
 - Não trate a resposta como totalmente errada.
-- Explique o que ainda precisa ser desenvolvido.
-- Ofereça uma pista que ajude o estudante a completar
-  o próprio raciocínio.
 
-C) INCORRETA
-- Explique com respeito onde está o equívoco.
-- Não diga que está correto quando não estiver.
-- Apresente outra explicação, analogia ou exemplo.
-- Faça uma pergunta diferente, se ela ajudar.
+INCORRETA:
+- Mostre o equívoco com respeito.
+- Explique o conceito de outra maneira.
+- Use outro exemplo ou analogia.
+- Não repita a mesma pergunta.
 
-D) NÃO SABE RESPONDER
-- Não pressione o estudante.
-- Comece com uma pista simples.
-- Se necessário, ofereça uma segunda pista mais específica.
-- Depois, explique o conceito de maneira acessível.
-
-E) DÚVIDA OU PEDIDO DE EXPLICAÇÃO
-- Explique diretamente o assunto.
-- Utilize exemplos adequados à série do estudante.
-- Não obrigue o estudante a responder perguntas antes
-  de receber uma explicação.
+NÃO SABE:
+- Não pressione.
+- Comece com uma explicação simples.
+- Ofereça uma pista.
+- Se necessário, apresente a solução conceitual.
 
 ========================================
-3. NUNCA ENTRE EM CICLOS DE REPETIÇÃO
+4. PREVENÇÃO DE REPETIÇÕES
 ========================================
 
-Esta regra é obrigatória.
+Considere todas as mensagens anteriores disponíveis.
 
-- Nunca repita a mesma pergunta sem acrescentar uma
-  explicação ou informação nova.
-- Nunca ignore uma resposta já fornecida.
-- Não pergunte novamente algo que o estudante já explicou.
-- Não utilize frases genéricas repetidamente.
-- Não faça o estudante sentir que está conversando
-  com um sistema automático.
+Nunca:
+- Ignore uma resposta que o estudante já forneceu.
+- Faça novamente uma pergunta já respondida.
+- Repita uma pista sem acrescentar informação.
+- Insista na mesma estratégia quando ela não funcionou.
 
-Se o estudante não compreender após duas tentativas,
-mude a estratégia de ensino.
+Se houver dificuldade após duas tentativas:
+- Mude a abordagem.
+- Apresente uma analogia diferente.
+- Utilize um exemplo concreto.
+- Explique o conceito de forma mais completa.
 
-Utilize outra explicação, um exemplo concreto ou uma analogia.
-
-Se ainda houver dificuldade, apresente uma explicação
-mais completa antes de continuar.
+Não fique preso em ciclos de perguntas.
 
 ========================================
-4. MÉTODO DE ENSINO
-========================================
-
-Quando estiver ensinando um conteúdo novo:
-
-1. Identifique a dúvida.
-2. Explique uma pequena parte do conteúdo.
-3. Utilize um exemplo simples.
-4. Verifique a compreensão quando fizer sentido.
-5. Analise a resposta do estudante.
-6. Adapte o próximo passo ao que ele demonstrou compreender.
-
-Não siga rigidamente essa sequência quando o estudante
-já demonstrar conhecimento suficiente.
-
-========================================
-5. ATIVIDADES E TRABALHOS ESCOLARES
+5. ATIVIDADES ESCOLARES
 ========================================
 
 Quando o estudante apresentar uma atividade:
 
-- Ajude-o a interpretar o enunciado.
-- Identifique os conhecimentos necessários.
+- Ajude a interpretar o enunciado.
+- Explique os conceitos necessários.
 - Oriente o raciocínio.
-- Utilize pistas progressivas.
-- Ajude a construir uma resposta com compreensão.
+- Utilize pistas progressivas quando apropriado.
+- Ajude o estudante a construir sua própria resposta.
 
-Não incentive a cópia sem entendimento.
+Não confunda ensinar um conteúdo com simplesmente
+entregar uma resposta sem explicação.
 
-Entretanto, você pode ensinar definições, conceitos,
-fatos científicos e explicações completas.
-
-Não confunda ensinar um conteúdo com fazer uma atividade
-inteira pelo estudante.
+Você pode fornecer explicações completas,
+definições e conhecimentos científicos.
 
 ========================================
-6. ADAPTAÇÃO AO ESTUDANTE
+6. ADAPTAÇÃO ESCOLAR
 ========================================
 
-- Considere a idade e a série informadas.
-- Utilize vocabulário adequado ao nível escolar.
-- Explique palavras técnicas quando necessário.
-- Comece pelo simples e avance gradualmente.
-- Não trate o estudante de maneira infantilizada.
-- Respeite diferentes ritmos de aprendizagem.
-
-========================================
-7. COMUNICAÇÃO
-========================================
-
+- Considere a idade e a série.
 - Utilize português brasileiro.
-- Seja natural, paciente e objetivo.
-- Reconheça o esforço sem elogios exagerados.
-- Prefira respostas claras e organizadas.
-- Evite textos enormes quando uma explicação curta resolver.
-- Faça no máximo uma pergunta por resposta.
-- Não termine todas as mensagens com perguntas.
+- Explique termos técnicos.
+- Comece pelo nível adequado ao estudante.
+- Aumente a complexidade gradualmente.
+- Não subestime a capacidade do estudante.
+
+========================================
+7. FORMATO DAS RESPOSTAS
+========================================
+
+- Use linguagem natural.
+- Prefira explicações claras.
+- Utilize listas quando ajudarem.
+- Evite textos enormes sem necessidade.
+- Não use elogios exagerados.
+- Faça no máximo uma pergunta por mensagem.
+- Não termine todas as respostas com perguntas.
 - Não invente informações.
-- Admita quando não souber algo.
+- Admita quando não souber.
 
 ========================================
-8. MEMÓRIA DA CONVERSA
+8. CONTINUIDADE DA CONVERSA
 ========================================
 
-Considere todas as mensagens anteriores disponíveis
-na conversa.
+Observe o histórico recebido.
 
-Observe:
-- O que o estudante já aprendeu.
-- Quais erros cometeu.
-- Quais explicações já recebeu.
-- Quais perguntas já respondeu.
-- Em quais pontos ainda demonstra dificuldade.
+Identifique:
+- O que já foi explicado.
+- O que o estudante compreendeu.
+- Quais respostas estavam parcialmente corretas.
+- Quais dúvidas continuam abertas.
+- Quais estratégias já foram utilizadas.
 
-Utilize essas informações para evitar repetições
-e adaptar o ensino.
+Use essas informações para adaptar sua próxima resposta.
 
-REGRA FINAL:
+========================================
+REGRA FINAL
+========================================
 
-O sucesso do NeuroPlay Tutor não deve ser medido pela
-quantidade de perguntas feitas, mas pela evolução da
-compreensão do estudante.
+O objetivo não é fazer o estudante responder
+à maior quantidade possível de perguntas.
 
-Ensine, acompanhe, adapte e incentive o pensamento próprio.
+O objetivo é ajudá-lo a compreender,
+raciocinar e aprender com autonomia.
+
+Você é o NeuroPlay Tutor.
+Ensine com clareza, acompanhe o raciocínio
+e adapte sua explicação ao estudante.
 `;
 }
 
+// =====================================================
+// CONSTRUÇÃO DO HISTÓRICO
+// =====================================================
+
+function getHistory(req, module) {
+    const history = req.session.chatHistory?.[module];
+
+    if (!Array.isArray(history)) {
+        return [];
+    }
+
+    return history
+        .filter(item =>
+            item &&
+            typeof item.conteudo === "string" &&
+            ["user", "assistant", "assistente"].includes(item.papel)
+        )
+        .slice(-MAX_HISTORY_MESSAGES);
+}
 
 // =====================================================
-// ENVIAR MENSAGEM
+// ENVIO DE MENSAGEM
 // =====================================================
 
 router.post("/message", requireAuth, async (req, res) => {
+    const startedAt = Date.now();
+
     try {
         const user = getUserById(req.session.userId);
 
         if (!user) {
             return res.status(401).json({
                 sucesso: false,
-                erro: "Usuário não encontrado."
+                erro: "Usuário não encontrado. Entre novamente."
             });
         }
 
         const mensagem =
-            typeof req.body.mensagem === "string"
+            typeof req.body?.mensagem === "string"
                 ? req.body.mensagem.trim()
                 : "";
 
@@ -269,16 +293,15 @@ router.post("/message", requireAuth, async (req, res) => {
             });
         }
 
-        if (mensagem.length > 5000) {
+        if (mensagem.length > MAX_MESSAGE_LENGTH) {
             return res.status(400).json({
                 sucesso: false,
-                erro: "Sua mensagem ultrapassou o limite de 5.000 caracteres."
+                erro: "A mensagem ultrapassou 5.000 caracteres."
             });
         }
 
         const modulo = normalizeModule(req.body.modulo);
-
-        const history = req.session.chatHistory?.[modulo] || [];
+        const history = getHistory(req, modulo);
 
         const messages = [
             {
@@ -287,11 +310,7 @@ router.post("/message", requireAuth, async (req, res) => {
             },
 
             ...history.map(item => ({
-                role:
-                    item.papel === "assistant" ||
-                    item.papel === "assistente"
-                        ? "assistant"
-                        : "user",
+                role: item.papel === "user" ? "user" : "assistant",
                 content: item.conteudo
             })),
 
@@ -301,21 +320,21 @@ router.post("/message", requireAuth, async (req, res) => {
             }
         ];
 
+        console.log(`[TUTOR] Solicitação recebida | módulo: ${modulo}`);
+
         const completion = await groq.chat.completions.create({
             model: MODEL,
             messages,
             temperature: 0.4,
-            max_tokens: 500
+            max_tokens: 700
         });
 
         const resposta =
             completion.choices?.[0]?.message?.content?.trim();
 
         if (!resposta) {
-            throw new Error("A IA retornou uma resposta vazia.");
+            throw new Error("A Groq retornou uma resposta vazia.");
         }
-
-        // Mantém a conversa somente na memória da sessão.
 
         const agora = new Date().toISOString();
 
@@ -341,25 +360,74 @@ router.post("/message", requireAuth, async (req, res) => {
             respostaSalva
         ].slice(-100);
 
-        return res.json({
-            sucesso: true,
-            modulo,
-            mensagem: mensagemSalva,
-            resposta: respostaSalva.conteudo
+        // Salva a sessão antes de responder ao frontend.
+        req.session.save(error => {
+            if (error) {
+                console.error("[TUTOR] Erro ao salvar sessão:", error.message);
+
+                return res.status(500).json({
+                    sucesso: false,
+                    erro: "A resposta foi gerada, mas não foi possível salvar a conversa."
+                });
+            }
+
+            console.log(
+                `[TUTOR] Resposta enviada | ${Date.now() - startedAt}ms`
+            );
+
+            return res.json({
+                sucesso: true,
+                modulo,
+                mensagem: mensagemSalva,
+                resposta
+            });
         });
 
     } catch (error) {
-        console.error("Erro no tutor:", error);
+        console.error("[TUTOR] Falha na geração:", {
+            message: error.message,
+            status: error.status,
+            code: error.code,
+            elapsed: Date.now() - startedAt
+        });
+
+        if (res.headersSent) {
+            return;
+        }
+
+        if (error.status === 401 || error.status === 403) {
+            return res.status(502).json({
+                sucesso: false,
+                erro: "A autenticação com o serviço de IA falhou. Verifique a configuração da Groq."
+            });
+        }
+
+        if (error.status === 429) {
+            return res.status(503).json({
+                sucesso: false,
+                erro: "O serviço de IA está temporariamente ocupado. Tente novamente em instantes."
+            });
+        }
+
+        if (
+            error.name === "APIConnectionTimeoutError" ||
+            error.name === "APIConnectionError"
+        ) {
+            return res.status(504).json({
+                sucesso: false,
+                erro: "A conexão com a IA demorou demais. Tente novamente."
+            });
+        }
 
         return res.status(500).json({
             sucesso: false,
-            erro: "Não foi possível gerar uma resposta agora. Tente novamente em instantes."
+            erro: "Não foi possível gerar uma resposta agora. Tente novamente."
         });
     }
 });
 
 // =====================================================
-// HISTÓRICO
+// CONSULTAR HISTÓRICO
 // =====================================================
 
 router.get("/history", requireAuth, (req, res) => {
@@ -370,18 +438,18 @@ router.get("/history", requireAuth, (req, res) => {
 
         const sessionHistory = req.session.chatHistory || {};
 
-        const history = modulo
+        const mensagens = modulo
             ? (sessionHistory[modulo] || [])
             : Object.values(sessionHistory).flat();
 
         return res.json({
             sucesso: true,
             modulo,
-            mensagens: history
+            mensagens
         });
 
     } catch (error) {
-        console.error("Erro ao carregar histórico:", error);
+        console.error("[TUTOR] Erro no histórico:", error.message);
 
         return res.status(500).json({
             sucesso: false,
@@ -389,8 +457,9 @@ router.get("/history", requireAuth, (req, res) => {
         });
     }
 });
+
 // =====================================================
-// NOVA CONVERSA — LIMPAR MEMÓRIA DO MÓDULO
+// NOVA CONVERSA
 // =====================================================
 
 router.delete("/history", requireAuth, (req, res) => {
@@ -401,13 +470,24 @@ router.delete("/history", requireAuth, (req, res) => {
             delete req.session.chatHistory[modulo];
         }
 
-        return res.json({
-            sucesso: true,
-            mensagem: "Nova conversa iniciada."
+        req.session.save(error => {
+            if (error) {
+                console.error("[TUTOR] Erro ao limpar sessão:", error.message);
+
+                return res.status(500).json({
+                    sucesso: false,
+                    erro: "Não foi possível iniciar uma nova conversa."
+                });
+            }
+
+            return res.json({
+                sucesso: true,
+                mensagem: "Nova conversa iniciada."
+            });
         });
 
     } catch (error) {
-        console.error("Erro ao iniciar nova conversa:", error);
+        console.error("[TUTOR] Erro ao iniciar conversa:", error.message);
 
         return res.status(500).json({
             sucesso: false,
@@ -415,4 +495,5 @@ router.delete("/history", requireAuth, (req, res) => {
         });
     }
 });
+
 module.exports = router;
