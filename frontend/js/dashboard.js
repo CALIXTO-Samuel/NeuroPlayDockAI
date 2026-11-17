@@ -123,38 +123,67 @@ const elements = {
 // REQUISIÇÕES À API
 // =====================================================
 
-async function apiRequest(url, options = {}) {
-    const response = await fetch(url, {
-        credentials: "same-origin",
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {})
-        }
-    });
 
-    let data = {};
+async function apiRequest(url, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     try {
-        data = await response.json();
-    } catch {
-        throw new Error("O servidor retornou uma resposta inválida.");
-    }
+        const response = await fetch(url, {
+            ...options,
+            credentials: "same-origin",
+            signal: controller.signal,
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            }
+        });
 
-    if (!response.ok) {
-        if (response.status === 401) {
-            window.location.href = "/login.html";
-            throw new Error("Sua sessão expirou. Entre novamente.");
+        let data;
+
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error(
+                `Resposta inválida do servidor (HTTP ${response.status}).`
+            );
         }
 
-        throw new Error(
-            data.erro ||
-            data.mensagem ||
-            "Não foi possível concluir a solicitação."
-        );
-    }
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = "/login.html";
+                throw new Error("Sua sessão expirou. Entre novamente.");
+            }
 
-    return data;
+            throw new Error(
+                data.erro ||
+                data.mensagem ||
+                `Erro do servidor: HTTP ${response.status}.`
+            );
+        }
+
+        return data;
+
+    } catch (error) {
+        if (error.name === "AbortError") {
+            throw new Error(
+                "A solicitação demorou demais. Tente novamente."
+            );
+        }
+
+        if (error instanceof TypeError) {
+            console.error("[API] Falha de conexão:", error);
+
+            throw new Error(
+                "Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente."
+            );
+        }
+
+        throw error;
+
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 // =====================================================
@@ -667,29 +696,35 @@ async function loadHistory() {
 // ENVIAR MENSAGEM
 // =====================================================
 
+
 async function sendMessage(messageText) {
     const mensagem = messageText.trim();
 
     if (!mensagem || state.isSending) return;
 
     if (mensagem.length > 5000) {
-        showChatError("Sua mensagem ultrapassou o limite de 5000 caracteres.");
+        showChatError(
+            "Sua mensagem ultrapassou o limite de 5.000 caracteres."
+        );
         return;
     }
 
     hideChatError();
 
-    state.currentMessages.push({
+    const mensagemLocal = {
         papel: "user",
         conteudo: mensagem,
         criadoEm: new Date().toISOString()
-    });
+    };
 
+    state.currentMessages.push(mensagemLocal);
     renderMessages();
 
-    elements.chatInput.value = "";
-    updateCharacterCount();
+    if (elements.chatInput) {
+        elements.chatInput.value = "";
+    }
 
+    updateCharacterCount();
     setSending(true);
     showTypingIndicator();
 
@@ -702,7 +737,11 @@ async function sendMessage(messageText) {
             })
         });
 
-        removeTypingIndicator();
+        if (!data.sucesso) {
+            throw new Error(
+                data.erro || "O tutor não conseguiu responder."
+            );
+        }
 
         const resposta =
             typeof data.resposta === "string"
@@ -710,7 +749,7 @@ async function sendMessage(messageText) {
                 : data.resposta?.conteudo;
 
         if (!resposta) {
-            throw new Error("O assistente não retornou uma resposta.");
+            throw new Error("O tutor retornou uma resposta vazia.");
         }
 
         state.currentMessages.push({
@@ -722,17 +761,17 @@ async function sendMessage(messageText) {
         renderMessages();
 
     } catch (error) {
-        removeTypingIndicator();
-
-        console.error("Erro ao enviar mensagem:", error);
+        console.error("[CHAT] Erro ao enviar mensagem:", error);
 
         showChatError(error.message);
 
     } finally {
+        removeTypingIndicator();
         setSending(false);
         elements.chatInput?.focus();
     }
 }
+
 
 // =====================================================
 // TROCAR DE MÓDULO
