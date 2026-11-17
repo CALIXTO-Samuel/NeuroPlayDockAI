@@ -6,7 +6,10 @@ const Groq = require("groq-sdk");
 
 const {
     getUserById,
-    normalizeModule
+    normalizeModule,
+    saveMessage,
+    getUserMessages,
+    clearUserMessages
 } = require("../database/database");
 
 const requireAuth = require("../middleware/requireAuth");
@@ -208,20 +211,8 @@ Você é o NeuroPlay Tutor. Ensine com clareza, precisão, continuidade e respei
 // CONSTRUÇÃO DO HISTÓRICO
 // =====================================================
 
-function getHistory(req, module) {
-    const history = req.session.chatHistory?.[module];
-
-    if (!Array.isArray(history)) {
-        return [];
-    }
-
-    return history
-        .filter(item =>
-            item &&
-            typeof item.conteudo === "string" &&
-            ["user", "assistant", "assistente"].includes(item.papel)
-        )
-        .slice(-MAX_HISTORY_MESSAGES);
+async function getHistory(userId, module) {
+    return getUserMessages(userId, MAX_HISTORY_MESSAGES, module);
 }
 
 // =====================================================
@@ -232,7 +223,7 @@ router.post("/message", requireAuth, async (req, res) => {
     const startedAt = Date.now();
 
     try {
-        const user = getUserById(req.session.userId);
+        const user = await getUserById(req.session.userId);
 
         if (!user) {
             return res.status(401).json({
@@ -261,7 +252,7 @@ router.post("/message", requireAuth, async (req, res) => {
         }
 
         const modulo = normalizeModule(req.body.modulo);
-        const history = getHistory(req, modulo);
+        const history = await getHistory(user.id, modulo);
 
         const messages = [
             {
@@ -296,52 +287,11 @@ router.post("/message", requireAuth, async (req, res) => {
             throw new Error("A Groq retornou uma resposta vazia.");
         }
 
-        const agora = new Date().toISOString();
+        const mensagemSalva = await saveMessage(user.id, "user", mensagem, modulo);
+        await saveMessage(user.id, "assistant", resposta, modulo);
 
-        const mensagemSalva = {
-            papel: "user",
-            conteudo: mensagem,
-            modulo,
-            criadoEm: agora
-        };
-
-        const respostaSalva = {
-            papel: "assistant",
-            conteudo: resposta,
-            modulo,
-            criadoEm: new Date().toISOString()
-        };
-
-        req.session.chatHistory ||= {};
-
-        req.session.chatHistory[modulo] = [
-            ...history,
-            mensagemSalva,
-            respostaSalva
-        ].slice(-100);
-
-        // Salva a sessão antes de responder ao frontend.
-        req.session.save(error => {
-            if (error) {
-                console.error("[TUTOR] Erro ao salvar sessão:", error.message);
-
-                return res.status(500).json({
-                    sucesso: false,
-                    erro: "A resposta foi gerada, mas não foi possível salvar a conversa."
-                });
-            }
-
-            console.log(
-                `[TUTOR] Resposta enviada | ${Date.now() - startedAt}ms`
-            );
-
-            return res.json({
-                sucesso: true,
-                modulo,
-                mensagem: mensagemSalva,
-                resposta
-            });
-        });
+        console.log("[TUTOR] Resposta salva no PostgreSQL | " + (Date.now() - startedAt) + "ms");
+        return res.json({ sucesso: true, modulo, mensagem: mensagemSalva, resposta });
 
     } catch (error) {
         console.error("[TUTOR] Falha na geração:", {
@@ -390,31 +340,14 @@ router.post("/message", requireAuth, async (req, res) => {
 // CONSULTAR HISTÓRICO
 // =====================================================
 
-router.get("/history", requireAuth, (req, res) => {
+router.get("/history", requireAuth, async (req, res) => {
     try {
-        const modulo = req.query.modulo
-            ? normalizeModule(req.query.modulo)
-            : null;
-
-        const sessionHistory = req.session.chatHistory || {};
-
-        const mensagens = modulo
-            ? (sessionHistory[modulo] || [])
-            : Object.values(sessionHistory).flat();
-
-        return res.json({
-            sucesso: true,
-            modulo,
-            mensagens
-        });
-
+        const modulo = req.query.modulo ? normalizeModule(req.query.modulo) : null;
+        const mensagens = await getUserMessages(req.session.userId, 100, modulo);
+        return res.json({ sucesso: true, modulo, mensagens });
     } catch (error) {
         console.error("[TUTOR] Erro no histórico:", error.message);
-
-        return res.status(500).json({
-            sucesso: false,
-            erro: "Não foi possível carregar o histórico."
-        });
+        return res.status(500).json({ sucesso: false, erro: "Não foi possível carregar o histórico." });
     }
 });
 
@@ -422,37 +355,14 @@ router.get("/history", requireAuth, (req, res) => {
 // NOVA CONVERSA
 // =====================================================
 
-router.delete("/history", requireAuth, (req, res) => {
+router.delete("/history", requireAuth, async (req, res) => {
     try {
         const modulo = normalizeModule(req.query.modulo);
-
-        if (req.session.chatHistory) {
-            delete req.session.chatHistory[modulo];
-        }
-
-        req.session.save(error => {
-            if (error) {
-                console.error("[TUTOR] Erro ao limpar sessão:", error.message);
-
-                return res.status(500).json({
-                    sucesso: false,
-                    erro: "Não foi possível iniciar uma nova conversa."
-                });
-            }
-
-            return res.json({
-                sucesso: true,
-                mensagem: "Nova conversa iniciada."
-            });
-        });
-
+        await clearUserMessages(req.session.userId, modulo);
+        return res.json({ sucesso: true, mensagem: "Nova conversa iniciada." });
     } catch (error) {
         console.error("[TUTOR] Erro ao iniciar conversa:", error.message);
-
-        return res.status(500).json({
-            sucesso: false,
-            erro: "Não foi possível iniciar uma nova conversa."
-        });
+        return res.status(500).json({ sucesso: false, erro: "Não foi possível iniciar uma nova conversa." });
     }
 });
 
