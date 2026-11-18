@@ -305,29 +305,17 @@ function formatMessageTime(dateValue) {
 
 
 function renderMarkdown(container, markdown) {
-    const lines = String(markdown || "")
-        .replace(/\\([#*_|`])/g, "$1")
-        .replace(/\r\n/g, "\n")
-        .split("\n");
+    const lines = String(markdown || "").replace(/\\([#*_|\\x60])/g, "$1").replace(/\r\n/g, "\n").split("\n");
 
     function inline(parent, value) {
-        const pattern =
-            /(`[^`]+`|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
-
+        const pattern = /(\x60[^\x60]+\x60|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
         let lastIndex = 0;
         let match;
-
         while ((match = pattern.exec(value)) !== null) {
-            if (match.index > lastIndex) {
-                parent.appendChild(
-                    document.createTextNode(value.slice(lastIndex, match.index))
-                );
-            }
-
+            if (match.index > lastIndex) parent.appendChild(document.createTextNode(value.slice(lastIndex, match.index)));
             const token = match[0];
             let element;
-
-            if (token.startsWith("`")) {
+            if (token.charCodeAt(0) === 96) {
                 element = document.createElement("code");
                 element.textContent = token.slice(1, -1);
             } else if (token.startsWith("**") || token.startsWith("__")) {
@@ -337,16 +325,20 @@ function renderMarkdown(container, markdown) {
                 element = document.createElement("em");
                 inline(element, token.slice(1, -1));
             }
-
             parent.appendChild(element);
             lastIndex = pattern.lastIndex;
         }
+        if (lastIndex < value.length) parent.appendChild(document.createTextNode(value.slice(lastIndex)));
+    }
 
-        if (lastIndex < value.length) {
-            parent.appendChild(
-                document.createTextNode(value.slice(lastIndex))
-            );
-        }
+    function splitTableRow(line) {
+        return line.trim().replace(/^\\|/, "").replace(/\\|$/, "").replace(/\\\|/g, "\u0000")
+            .split("|").map(cell => cell.replace(/\u0000/g, "|").trim());
+    }
+
+    function isTableSeparator(line) {
+        const cells = splitTableRow(line);
+        return cells.length > 1 && cells.every(cell => /^:?-{3,}:?$/.test(cell));
     }
 
     let paragraph = [];
@@ -355,7 +347,6 @@ function renderMarkdown(container, markdown) {
 
     function flushParagraph() {
         if (!paragraph.length) return;
-
         const p = document.createElement("p");
         inline(p, paragraph.join(" "));
         container.appendChild(p);
@@ -363,58 +354,86 @@ function renderMarkdown(container, markdown) {
     }
 
     function flushList() {
-        if (list) {
-            container.appendChild(list);
-            list = null;
-            listType = null;
-        }
+        if (!list) return;
+        container.appendChild(list);
+        list = null;
+        listType = null;
     }
 
-    for (const line of lines) {
-        const trimmed = line.trim();
+    function flushBlocks() {
+        flushParagraph();
+        flushList();
+    }
 
+    for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i].trim();
         if (!trimmed) {
-            flushParagraph();
-            flushList();
+            flushBlocks();
+            continue;
+        }
+
+        if (trimmed.includes("|") && lines[i + 1] && isTableSeparator(lines[i + 1].trim())) {
+            flushBlocks();
+            const headers = splitTableRow(trimmed);
+            const table = document.createElement("table");
+            table.className = "markdown-table";
+            const thead = document.createElement("thead");
+            const headerRow = document.createElement("tr");
+            headers.forEach(value => {
+                const th = document.createElement("th");
+                inline(th, value);
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement("tbody");
+            i += 2;
+            while (i < lines.length && lines[i].trim().includes("|")) {
+                const cells = splitTableRow(lines[i].trim());
+                const row = document.createElement("tr");
+                headers.forEach((_, index) => {
+                    const td = document.createElement("td");
+                    inline(td, cells[index] || "");
+                    row.appendChild(td);
+                });
+                tbody.appendChild(row);
+                i++;
+            }
+            table.appendChild(tbody);
+            const wrapper = document.createElement("div");
+            wrapper.className = "markdown-table-wrap";
+            wrapper.appendChild(table);
+            container.appendChild(wrapper);
+            i--;
             continue;
         }
 
         const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
-
         if (heading) {
-            flushParagraph();
-            flushList();
-
-            const element = document.createElement(
-                `h${heading[1].length}`
-            );
-
+            flushBlocks();
+            const element = document.createElement("h" + heading[1].length);
             inline(element, heading[2]);
             container.appendChild(element);
             continue;
         }
 
         if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
-            flushParagraph();
-            flushList();
+            flushBlocks();
             container.appendChild(document.createElement("hr"));
             continue;
         }
 
         const unordered = trimmed.match(/^[-*+]\s+(.+)$/);
         const ordered = trimmed.match(/^\d+[.)]\s+(.+)$/);
-
         if (unordered || ordered) {
             flushParagraph();
-
             const type = unordered ? "ul" : "ol";
-
             if (!list || listType !== type) {
                 flushList();
                 list = document.createElement(type);
                 listType = type;
             }
-
             const item = document.createElement("li");
             inline(item, (unordered || ordered)[1]);
             list.appendChild(item);
@@ -422,23 +441,17 @@ function renderMarkdown(container, markdown) {
         }
 
         flushList();
-
         if (trimmed.startsWith("> ")) {
             flushParagraph();
-
             const quote = document.createElement("blockquote");
             inline(quote, trimmed.slice(2));
             container.appendChild(quote);
             continue;
         }
-
         paragraph.push(trimmed);
     }
-
-    flushParagraph();
-    flushList();
+    flushBlocks();
 }
-
 
 // =====================================================
 // CRIAÇÃO DE MENSAGENS
