@@ -305,7 +305,7 @@ function formatMessageTime(dateValue) {
 
 
 function renderMarkdown(container, markdown) {
-    const lines = String(markdown || "").replace(/\\([#*_|\\x60])/g, "$1").replace(/\r\n/g, "\n").split("\n");
+    const lines = String(markdown || "").replace(/\\([#*_|])/g, "$1").replace(/\r\n/g, "\n").split("\n");
 
     function inline(parent, value) {
         const pattern = /(\x60[^\x60]+\x60|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
