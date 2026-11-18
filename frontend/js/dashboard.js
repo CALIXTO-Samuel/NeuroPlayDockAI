@@ -332,7 +332,7 @@ function renderMarkdown(container, markdown) {
     }
 
     function splitTableRow(line) {
-        return line.trim().replace(/^\\|/, "").replace(/\\|$/, "").replace(/\\\|/g, "\u0000")
+        return line.trim().replace(/^\|/, "").replace(/\|$/, "").replace(/\\\|/g, "\u0000")
             .split("|").map(cell => cell.replace(/\u0000/g, "|").trim());
     }
 
