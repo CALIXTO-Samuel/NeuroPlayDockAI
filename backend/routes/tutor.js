@@ -277,7 +277,7 @@ router.post("/message", requireAuth, async (req, res) => {
             model: MODEL,
             messages,
             temperature: 0.4,
-            max_tokens: 700
+            max_tokens: 1800
         });
 
         const resposta =
