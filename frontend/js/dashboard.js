@@ -305,7 +305,12 @@ function formatMessageTime(dateValue) {
 
 
 function renderMarkdown(container, markdown) {
-    const lines = String(markdown || "").replace(/\\([#*_|])/g, "$1").replace(/\r\n/g, "\n").split("\n");
+    let source = String(markdown || "").replace(/\r\n/g, "\n");
+    // Alguns retornos podem chegar com as quebras serializadas como texto literal.
+    if (!source.includes("\n") && source.includes("\\n")) {
+        source = source.replace(/\\n/g, "\n");
+    }
+    const lines = source.replace(/\\([#*_|])/g, "$1").split("\n");
 
     function inline(parent, value) {
         const pattern = /(\x60[^\x60]+\x60|\*\*[^*]+\*\*|__[^_]+__|\*[^*]+\*|_[^_]+_)/g;
