@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            if (nome.length < 2 || nome.length > 80) {
+            if (nome.length < 2 || nome.length > 70) {
                 showMessage(
                     registerError,
                     "Informe um nome com pelo menos 2 caracteres."
@@ -196,10 +196,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            if (!/^[a-zA-Z0-9_.-]{3,30}$/.test(usuario)) {
+            if (!/^[a-zA-Z0-9_.-]{3,24}$/.test(usuario)) {
                 showMessage(
                     registerError,
-                    "O usuário deve ter de 3 a 30 caracteres e pode conter letras, números, ponto, hífen ou sublinhado."
+                    "O usuário deve ter de 3 a 24 caracteres e pode conter letras, números, ponto, hífen ou sublinhado."
                 );
                 return;
             }
