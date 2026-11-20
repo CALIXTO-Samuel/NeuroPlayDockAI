@@ -10,7 +10,13 @@ const router = express.Router();
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, limit: 10,
     standardHeaders: true, legacyHeaders: false,
-    message: { sucesso: false, erro: "Muitas tentativas. Aguarde alguns minutos." }
+    message: { sucesso: false, erro: "Muitas tentativas de acesso. Aguarde alguns minutos." }
+});
+
+const registrationLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, limit: 5,
+    standardHeaders: true, legacyHeaders: false,
+    message: { sucesso: false, erro: "Muitas tentativas de cadastro. Tente novamente mais tarde." }
 });
 
 function publicUser(user) {
@@ -20,7 +26,7 @@ function publicUser(user) {
     };
 }
 
-router.post("/register", async (req, res) => {
+router.post("/register", registrationLimiter, async (req, res) => {
     try {
         const { nome, usuario, idade, serie, senha } = req.body;
         if (!nome || !usuario || !idade || !serie || !senha) {
@@ -55,13 +61,18 @@ router.post("/register", async (req, res) => {
             id: crypto.randomUUID(), nome: cleanName, usuario: cleanUsername,
             idade: numericAge, serie: String(serie).trim(), senhaHash
         });
-        req.session.userId = user.id;
-        req.session.save(error => {
+        req.session.regenerate(error => {
             if (error) return res.status(500).json({
                 sucesso: false, erro: "Conta criada, mas não foi possível iniciar a sessão."
             });
-            res.status(201).json({
-                sucesso: true, mensagem: "Conta criada com sucesso.", usuario: publicUser(user)
+            req.session.userId = user.id;
+            req.session.save(saveError => {
+                if (saveError) return res.status(500).json({
+                    sucesso: false, erro: "Conta criada, mas não foi possível iniciar a sessão."
+                });
+                res.status(201).json({
+                    sucesso: true, mensagem: "Conta criada com sucesso.", usuario: publicUser(user)
+                });
             });
         });
     } catch (error) {
