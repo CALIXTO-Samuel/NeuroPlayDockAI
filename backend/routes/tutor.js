@@ -3,6 +3,7 @@
 
 const express = require("express");
 const Groq = require("groq-sdk");
+const rateLimit = require("express-rate-limit");
 
 const {
     getUserById,
@@ -20,6 +21,17 @@ const MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 const MAX_MESSAGE_LENGTH = 5000;
 const MAX_HISTORY_MESSAGES = 30;
 const REQUEST_TIMEOUT = 45000;
+
+const tutorMessageLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        sucesso: false,
+        erro: "Você enviou muitas mensagens em pouco tempo. Aguarde alguns minutos."
+    }
+});
 
 if (!process.env.GROQ_API_KEY) {
     throw new Error("GROQ_API_KEY não configurada.");
@@ -272,7 +284,7 @@ async function getHistory(userId, module) {
 // ENVIO DE MENSAGEM
 // =====================================================
 
-router.post("/message", requireAuth, async (req, res) => {
+router.post("/message", requireAuth, tutorMessageLimiter, async (req, res) => {
     const startedAt = Date.now();
 
     try {
